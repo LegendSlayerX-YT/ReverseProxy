@@ -22,6 +22,16 @@ echo
 echo "Starting reverse proxy..."
 docker compose up -d --force-recreate
 
+# Keep the Mac awake while Docker Desktop is running, so containers stay
+# responsive across sleep. caffeinate -w waits on the Docker PID and exits
+# on its own once Docker Desktop quits, so there's no stray process to clean up.
+DOCKER_PID="$(pgrep -x "Docker Desktop" | head -1 || true)"
+if [ -n "$DOCKER_PID" ] && ! pgrep -x caffeinate >/dev/null; then
+  echo
+  echo "Preventing sleep while Docker (PID $DOCKER_PID) is running..."
+  caffeinate -s -w "$DOCKER_PID" &
+fi
+
 echo
 echo "Status:"
 docker compose ps
